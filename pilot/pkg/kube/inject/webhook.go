@@ -480,6 +480,7 @@ func toAdmissionResponse(err error) *v1beta1.AdmissionResponse {
 	return &v1beta1.AdmissionResponse{Result: &metav1.Status{Message: err.Error()}}
 }
 
+// inject
 func (wh *Webhook) inject(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	req := ar.Request
 	var pod corev1.Pod
@@ -501,6 +502,7 @@ func (wh *Webhook) inject(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionRespons
 		}
 	}
 
+	// build spec
 	spec, status, err := injectionData(wh.sidecarConfig.Template, wh.sidecarTemplateVersion, &pod.ObjectMeta, &pod.Spec, &pod.ObjectMeta, wh.meshConfig.DefaultConfig, wh.meshConfig) // nolint: lll
 	if err != nil {
 		return toAdmissionResponse(err)
@@ -512,6 +514,7 @@ func (wh *Webhook) inject(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionRespons
 		annotations[k] = v
 	}
 
+	// create patch
 	patchBytes, err := createPatch(&pod, injectionStatus(&pod), annotations, spec)
 	if err != nil {
 		return toAdmissionResponse(err)
@@ -530,6 +533,7 @@ func (wh *Webhook) inject(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionRespons
 	return &reviewResponse
 }
 
+// package wh.inject,
 func (wh *Webhook) serveInject(w http.ResponseWriter, r *http.Request) {
 	var body []byte
 	if r.Body != nil {

@@ -80,6 +80,7 @@ var (
 				HealthCheckInterval: flags.healthCheckInterval,
 				HealthCheckFile:     flags.healthCheckFile,
 			}
+			// create webhook
 			wh, err := inject.NewWebhook(parameters)
 			if err != nil {
 				return multierror.Prefix(err, "failed to create injection webhook")
@@ -202,6 +203,7 @@ func init() {
 	rootCmd.AddCommand(probeCmd)
 }
 
+// sidecar injector entry
 func main() {
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(-1)
