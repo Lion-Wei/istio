@@ -70,6 +70,8 @@ func init() {
 
 // NewController creates a new Kubernetes controller for CRDs
 // Use "" for namespace to listen for all namespace changes
+// controller for crd, basiclly for istio config resources
+// list from apiserver and push to storage.
 func NewController(client *Client, options kube.ControllerOptions) model.ConfigStoreCache {
 	log.Infof("CRD controller watching namespaces %q", options.WatchedNamespace)
 

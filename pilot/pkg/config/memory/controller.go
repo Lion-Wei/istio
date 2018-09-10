@@ -28,6 +28,7 @@ type controller struct {
 // NewController return an implementation of model.ConfigStoreCache
 // This is a client-side monitor that dispatches events as the changes are being
 // made on the client.
+// build config controller from config store
 func NewController(cs model.ConfigStore) model.ConfigStoreCache {
 	out := &controller{
 		configStore: cs,

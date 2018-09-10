@@ -71,6 +71,7 @@ func (q *queueImpl) Push(item Task) {
 	q.cond.Signal()
 }
 
+// handle item in q.queue, use item handler
 func (q *queueImpl) Run(stop <-chan struct{}) {
 	go func() {
 		<-stop

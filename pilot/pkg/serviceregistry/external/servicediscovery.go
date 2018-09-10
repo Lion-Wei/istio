@@ -64,6 +64,7 @@ func NewServiceDiscovery(callbacks model.ConfigStoreCache, store model.IstioConf
 		updateNeeded:     true,
 	}
 	if callbacks != nil {
+		// append handler for istio type, istio type event
 		callbacks.RegisterEventHandler(model.ServiceEntry.Type, func(config model.Config, event model.Event) {
 			serviceEntry := config.Spec.(*networking.ServiceEntry)
 
@@ -76,6 +77,7 @@ func NewServiceDiscovery(callbacks model.ConfigStoreCache, store model.IstioConf
 			services := convertServices(serviceEntry, config.CreationTimestamp)
 			for _, handler := range c.serviceHandlers {
 				for _, service := range services {
+					// real handler
 					go handler(service, event)
 				}
 			}

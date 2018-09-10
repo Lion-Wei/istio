@@ -144,6 +144,7 @@ func (c *Controller) notify(obj interface{}, event model.Event) error {
 // See config/kube for CRD events.
 // See config/ingress for Ingress objects
 func (c *Controller) createCacheHandler(informer cache.SharedIndexInformer, otype string) cacheHandler {
+	// like the handler do nothing...
 	handler := &ChainHandler{funcs: []Handler{c.notify}}
 
 	informer.AddEventHandler(
@@ -218,6 +219,7 @@ func (c *Controller) GetService(hostname model.Hostname) (*model.Service, error)
 		return nil, nil
 	}
 
+	// here is the convert, we need know how exictly convert work...
 	svc := convertService(*item, c.domainSuffix)
 	return svc, nil
 }

@@ -40,6 +40,8 @@ func Make(descriptor model.ConfigDescriptor) model.ConfigStore {
 	return &out
 }
 
+// config store for local memory case, read config from local
+// this store realize configStore
 type store struct {
 	descriptor model.ConfigDescriptor
 	data       map[string]map[string]*sync.Map

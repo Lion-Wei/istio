@@ -192,6 +192,7 @@ func NewServer(args PilotArgs) (*Server, error) {
 	if err := s.initKubeClient(&args); err != nil {
 		return nil, err
 	}
+	// mutil cluster config
 	if err := s.initClusterRegistries(&args); err != nil {
 		return nil, err
 	}
@@ -201,6 +202,8 @@ func NewServer(args PilotArgs) (*Server, error) {
 	if err := s.initMixerSan(&args); err != nil {
 		return nil, err
 	}
+	// init connection to config center
+	// config center would be config dir or kubernetes crd.
 	if err := s.initConfigController(&args); err != nil {
 		return nil, err
 	}
@@ -428,15 +431,21 @@ func (c *mockController) Run(<-chan struct{}) {}
 
 // initConfigController creates the config controller in the pilotConfig.
 func (s *Server) initConfigController(args *PilotArgs) error {
+	// mesh config proto service address
+	// TODO: need to check this config in my environment
 	mcpServerAddrs := args.MCPServerAddrs
 
+	// get config from address? like local config file...?
 	if len(mcpServerAddrs) > 0 {
 		clientNodeID := args.Namespace
+		// IstioConfigTypes is all istio config types: virtualservice/destinationrule/...
 		supportedTypes := make([]string, len(model.IstioConfigTypes))
 		for i, model := range model.IstioConfigTypes {
 			supportedTypes[i] = fmt.Sprintf("type.googleapis.com/%s", model.MessageName)
 		}
 
+		// controller for all kinds of mesh configs
+		// list/get/update/delete/create
 		mcpController := coredatamodel.NewController()
 
 		s.addStartFunc(func(stop <-chan struct{}) error {
@@ -455,6 +464,7 @@ func (s *Server) initConfigController(args *PilotArgs) error {
 				}
 
 				cl := mcpapi.NewAggregatedMeshConfigServiceClient(conn)
+				// pass config change to mcpController. use mcpController.Apply...
 				mcpClient := mcpclient.New(cl, supportedTypes, mcpController, clientNodeID, map[string]string{})
 				go mcpClient.Run(ctx)
 			}
@@ -464,6 +474,7 @@ func (s *Server) initConfigController(args *PilotArgs) error {
 		s.configController = mcpController
 
 	} else if args.Config.Controller != nil {
+		// only used for local pilot in test case
 		s.configController = args.Config.Controller
 	} else if args.Config.FileDir != "" {
 		store := memory.Make(model.IstioConfigTypes)
@@ -501,6 +512,8 @@ func (s *Server) initConfigController(args *PilotArgs) error {
 			s.configController = confController
 		}
 	} else {
+		// config controller for kube crd
+		// the most important part
 		controller, err := s.makeKubeConfigController(args)
 		if err != nil {
 			return err
@@ -541,6 +554,7 @@ func (s *Server) initConfigController(args *PilotArgs) error {
 	}
 
 	// Create the config store.
+	// get config from whatever store and save to istioConfigStore.
 	s.istioConfigStore = model.MakeIstioStore(s.configController)
 
 	return nil
