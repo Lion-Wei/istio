@@ -131,11 +131,9 @@ func (c *controller) Run(stop <-chan struct{}) {
 }
 
 func (c *controller) ConfigDescriptor() model.ConfigDescriptor {
-	//TODO: are these two config descriptors right?
 	return model.ConfigDescriptor{model.Gateway, model.VirtualService}
 }
 
-//TODO: we don't return out of this function now
 func (c *controller) Get(typ, name, namespace string) *model.Config {
 	if typ != model.Gateway.Type && typ != model.VirtualService.Type {
 		return nil
@@ -157,7 +155,22 @@ func (c *controller) Get(typ, name, namespace string) *model.Config {
 		return nil
 	}
 
-	return nil
+	out := &model.Config{}
+	if typ == model.Gateway.Type {
+		*out = ConvertIngressV1alpha3(*ingress, c.domainSuffix)
+	}
+	if typ == model.VirtualService.Type {
+		ingressByHost := map[string]*model.Config{}
+		ConvertIngressVirtualService(*ingress, c.domainSuffix, ingressByHost)
+		if len(ingressByHost) == 1 {
+			for _, obj := range ingressByHost {
+				out = obj
+			}
+		} else {
+			return nil
+		}
+	}
+	return out
 }
 
 func (c *controller) List(typ, namespace string) ([]model.Config, error) {
