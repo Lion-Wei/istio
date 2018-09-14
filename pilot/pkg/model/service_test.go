@@ -250,7 +250,7 @@ func TestHostnameMatches(t *testing.T) {
 		{"wildcarded domain matches wildcarded subdomain", "*.com", "*.foo.com", true},
 		{"wildcarded sub-domain does not match domain", "foo.com", "*.foo.com", false},
 
-		{"long wildcard matches short host", "*.foo.bar.baz", "baz", true},
+		{"long wildcard matches short host", "*.foo.bar.baz", "baz", false},
 	}
 
 	for idx, tt := range tests {

@@ -444,6 +444,18 @@ type ServiceAccounts interface {
 	GetIstioServiceAccounts(hostname Hostname, ports []int) []string
 }
 
+// cover to check if Hostname o is covered by Hostname h wildcard
+// if h note wildcard, then return if h and o are the same.
+func (h Hostname) cover(o Hostname) bool {
+	hs, os := string(h), string(o)
+	if strings.HasPrefix(hs, "*") {
+		hSuffix := strings.TrimPrefix(hs, "*")
+		return strings.HasSuffix(os, hSuffix)
+	} else {
+		return hs == os
+	}
+}
+
 // Matches returns true if this Hostname "matches" the other hostname. Hostnames match if:
 // - they're fully resolved (i.e. not wildcarded) and match exactly (i.e. an exact string match)
 // - one or both are wildcarded (e.g. "*.foo.com"), in which case we use wildcard resolution rules
@@ -452,43 +464,9 @@ type ServiceAccounts interface {
 //  Hostname("foo.com").Matches("foo.com")   = true
 //  Hostname("foo.com").Matches("bar.com")   = false
 //  Hostname("*.com").Matches("foo.com")     = true
-//  Hostname("*.com").Matches("foo.com")     = true
 //  Hostname("*.foo.com").Matches("foo.com") = false
 func (h Hostname) Matches(o Hostname) bool {
-	if len(h) == 0 && len(o) == 0 {
-		return true
-	}
-
-	hWildcard := string(h[0]) == "*"
-	if hWildcard && len(o) == 0 {
-		return true
-	}
-
-	oWildcard := string(o[0]) == "*"
-	if !hWildcard && !oWildcard {
-		// both are non-wildcards, so do normal string comparison
-		return h == o
-	}
-
-	longer, shorter := string(h), string(o)
-	if hWildcard {
-		longer = string(h[1:])
-	}
-	if oWildcard {
-		shorter = string(o[1:])
-	}
-	if len(longer) < len(shorter) {
-		longer, shorter = shorter, longer
-		hWildcard, oWildcard = oWildcard, hWildcard
-	}
-
-	matches := strings.HasSuffix(longer, shorter)
-	if matches && hWildcard && !oWildcard && strings.TrimSuffix(longer, shorter) == "." {
-		// we match, but the longer is a wildcard and the shorter is not; we need to ensure we don't match input
-		// like `*.foo.com` to `foo.com` in that case (to avoid matching a domain literal to a wildcard subdomain)
-		return false
-	}
-	return matches
+	return h.cover(o) || o.cover(h)
 }
 
 // SubsetOf returns true if this hostname is a valid subset of the other hostname. The semantics are
